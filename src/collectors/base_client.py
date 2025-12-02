@@ -9,16 +9,37 @@ import logging
 
 class BaseClient(ABC):
     """
-    Базовый клиент API для сервисов вакансий.
-    Задает единый интерфейс и переиспользуемую логику запросов.
+    Базовый абстрактный клиент API для сервисов вакансий.
+
+    Предоставляет единый интерфейс для:
+    - генерации загаловков
+    - выполнения HTTP-запросов
+    - повторных попыток (retry)
+    - логирования
+    - таймаутов
+
+    Наследникам необходимо определеить:
+    - base_url
+    - build_headers()
+    - search()
     """
 
-    base_url:       str     = ""        # задается в наследниках
+    base_url:       str     = ""
     max_retries:    int     = 3
-    retry_delay:    float   = 1.0       # секунды
+    retry_delay:    float   = 1.0
 
     
     def __init__(self, token: Optional[str] = None, timeout: int = 10):
+        """
+        Инициализирует базовый клиент API.
+
+        Args:
+            token (Optional[str]):
+                Токен доступа, если он необходим сервису.
+                Для HeadHunter токен обычно не требуется.
+            timeout (int):
+                Таймаут HTTP-запросов в секундах.
+        """
         self.token      = token
         self.timeout    = timeout
 
@@ -32,11 +53,31 @@ class BaseClient(ABC):
 
     @abstractmethod
     def build_headers(self) -> Dict[str, str]:
-        """Собирает заголовки запросов."""
+        """
+        Формирует HTTP-заголовки для запросов.
+
+        Returns:
+            Dict[str, str]:
+                Заголовки запросов, включая User-Agent, токен (если требуется)
+                и другие параметры, специфичные для API
+        """
         pass
 
     def serach(self, query: str, **kwargs) -> Any:
-        """Выполняет поиск вакансий (реализация в наследниках)."""
+        """
+        Выполняет поиск вакансий.
+
+        Args:
+            query (str):
+                Поисковая строка.
+        
+        Returns:
+            Any:
+                JSON-ответ API сервиса.
+            
+        Note:
+            Должен быть реализован в классах-наследниках.
+        """
         pass
 
 
@@ -51,7 +92,33 @@ class BaseClient(ABC):
             params: Optional[dict] = None,
             data: Optional[dict] = None,
     ) -> Any:
-        
+        """
+        Выполняет HTTP-запрос с поддержкой retry, логированием и обработкой ошибок.
+
+        Args:
+            method (str):
+                HTTP-метод ("GET", "POST", "PUT", ...).
+            endpoint (str):
+                Путь относительного base_url (например: "/vacancies").
+            params (Optional[dict]):
+                Query-параметры для URL.
+            data (Optional[dict]):
+                Тело запроса (JSON).
+
+        Returns:
+            Any:
+                Распарсенный JSON-ответ сервиса.
+            
+        Raises:
+            ValueError:
+                Если base_url не установлен.
+            RuntimeError:
+                - если превышено количество повторов
+                - если сервер вернул некорректный JSON
+                - HTTP-ошибка.
+            requests.HTTPError:
+                Если сервер вернул HTTP-код ошибки.
+        """
         if not self.base_url:
             raise ValueError("base_url must be defined in the client class.")
         
