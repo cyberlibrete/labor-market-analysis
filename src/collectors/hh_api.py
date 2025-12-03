@@ -43,7 +43,7 @@ class HHClient(BaseClient):
         Args:
             query (str):
                 Поисковый запрос (нпример: "python developer").
-            page (int, ptional):
+            page (int, optional):
                 Номер страницы результата. Поумолчанию 0.
             per_page (int, optional):
                 Количество вакансий на странице (максимум 100).
