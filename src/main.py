@@ -115,8 +115,8 @@ def get_vacancies_by_area(_mod: HHClient):
                         output_data[f"{_key}"].append(line.get(f"{_key}", ""))
                 
                 df = pd.DataFrame(data=output_data)
-                
-                # TODO: описать очитску данных
+
+                # TODO: описать очитску данных (./src/cleaning/hh_cleaning.py)
 
                 df.to_csv(f"./data/HH/vacancies/{district["id"]}.csv", index=True)
                 print(df)
