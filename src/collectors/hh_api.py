@@ -28,7 +28,7 @@ class HHClient(BaseClient):
 
     def serach(
             self,
-            query: str,
+            query: Optional[str] = None,
             page: int = 0,
             per_page: int = 100,
             area: Optional[int] = None,
@@ -41,7 +41,7 @@ class HHClient(BaseClient):
         Выполнение поиска вакансий через API hh.ru.
 
         Args:
-            query (str):
+            query (Optional[str], optional):
                 Поисковый запрос (нпример: "python developer").
             page (int, optional):
                 Номер страницы результата. Поумолчанию 0.
