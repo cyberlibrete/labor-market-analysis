@@ -2,6 +2,9 @@ from collectors.hh_api import HHClient
 from collectors.superjob_api import SuperJobAPI
 import pandas as pd
 
+def get_json_from_object(value):
+    ...
+
 def get_hh_areas_data():
     areas = HHClient.get_area()
 
@@ -71,17 +74,33 @@ def get_hh_areas_data():
     del df_cities
 
 def get_vacancies_by_area(_mod: HHClient):
-    _data = _mod.get_area()
-    for country in _data:
-        print(country["id"], country["name"])
-        for district in country["areas"]:
-            # print(district["id"], district["name"])
+    
+    # Получаем дерево регионов
+    regions = _mod.get_area()
 
+    # Обрабатываем каждый ID страны
+    for country in regions:
+        
+        # Обрабатываем каждый ID региона
+        for district in country["areas"]:
+            
+            # NOTE: для исключения возможности получить поврежденный файл,
+            #       мы будем сохранять вакансии частями. В данногм случае
+            #       сохранение будет по регионам
+
+            # Список данных по вакансиям
             vacancies_data = []
+
+            # Счетчик страниц
             _page_idx = 0
+
             while True:
+
+                # Отображение информации региона, с которым работает скрипт
                 print(f"district_id: {district["id"]}\t\tpage: {_page_idx}")
+
                 try:
+                    # Попытка выполнения поиска вакансий по ID региона и странице
                     items = _mod.serach(
                         area=district["id"],
                         page=_page_idx
@@ -90,6 +109,7 @@ def get_vacancies_by_area(_mod: HHClient):
                     if len(items) == 0:
                         break
                     
+                    # Успешно полученные данные вносим в список
                     vacancies_data.extend(items)
 
                 except Exception as e:
@@ -99,12 +119,15 @@ def get_vacancies_by_area(_mod: HHClient):
                 _page_idx += 1
                 break
             
+            # Если данные по региону были получены, то {...}
             if len(vacancies_data) > 0:
                 print(
                     f"saving data with vacancies of district {district["id"]} ({district["name"]})"
                 )
                 
+                # Определяем переменную для списка примененных признаков
                 fieldnames = list()
+
                 for it in vacancies_data:
                     fieldnames += it.keys()
                 fieldnames = list(set(fieldnames))
@@ -114,17 +137,25 @@ def get_vacancies_by_area(_mod: HHClient):
                     for _key in fieldnames:
                         output_data[f"{_key}"].append(line.get(f"{_key}", ""))
                 
+                # Создаем датафрейм (таблицу вакансий в регионе)
                 df = pd.DataFrame(data=output_data)
+                
 
-                # TODO: описать очитску данных (./src/cleaning/hh_cleaning.py)
-
-                df.to_csv(f"./data/HH/vacancies/{district["id"]}.csv", index=True)
+                df.to_csv(f"./data/raw/HH/vacancies/{district["id"]}.csv", index=True)
                 print(df)
 
-                
-                del df
+                print(df.shape)
+                # TODO: очистка дубликатов
+                df.drop_duplicates()
+                print(df.shape)
 
+                del df
+                
+
+            # ОСТАНОВКА ЦИКЛА
             break
+
+        # ОСТАНОВКА ЦИКЛА
         break
 
 def main():
