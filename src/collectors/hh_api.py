@@ -34,6 +34,8 @@ class HHClient(BaseClient):
             employment: Optional[str] = None,
             schedule: Optional[str] = None,
             only_with_salary: bool = False,
+            date_from: Optional[str] = None,
+            date_to: Optional[str] = None,
     ) -> Any:
         """
         Выполнение поиска вакансий через API hh.ru.
@@ -41,12 +43,16 @@ class HHClient(BaseClient):
         Args:
             query (Optional[str], optional):
                 Поисковый запрос (нпример: "python developer").
+
             page (int, optional):
                 Номер страницы результата. Поумолчанию 0.
+
             per_page (int, optional):
                 Количество вакансий на странице (максимум 100).
+
             area (Optional[int], optional):
                 Код региона поиска (Москва = 1, Санкт-Петербург = 2 и тд).
+
             experience (Optional[str], optional):
                 Фильтр по требуемому опыту.
                 Возможные значения:
@@ -54,6 +60,7 @@ class HHClient(BaseClient):
                 - "between1And3"
                 - "between3And6"
                 - "moreThan6"
+
             employment (Optional[str], optional):
                 Тип занятости:
                 - "full"
@@ -61,6 +68,7 @@ class HHClient(BaseClient):
                 - "project"
                 - "volunteer"
                 - "probation"
+
             schedule (Optional[str], optional):
                 График работы:
                 - "fullDay"
@@ -68,6 +76,13 @@ class HHClient(BaseClient):
                 - "flexible"
                 - "remote"
                 - "flyInFlyOut"
+
+            date_from (Optional[str], optional):
+                Дата начала периода ('2024-01-01T00:00:00.00+03:00')
+
+            date_to (Optional[str], optional):
+                Дата конца периода ('2024-12-31T23:59:59.00+03:00')
+
             only_with_salary (bool, optional):
                 Если True - возвращает вакансии, где указана зарплата.
             
@@ -94,6 +109,10 @@ class HHClient(BaseClient):
             params["employment"] = employment
         if schedule:
             params["schedule"] = schedule
+        if date_from:
+            params["date_from"] = date_from
+        if date_to:
+            params["date_to"] = date_to
         
         return self._requests("GET", "/vacancies", params=params)
 
