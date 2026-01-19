@@ -1,6 +1,7 @@
 from collectors.hh_api import HHClient
 from collectors.superjob_api import SuperJobAPI
 import pandas as pd
+import datetime as dt
 
 def get_json_from_object(value):
     ...
@@ -74,7 +75,130 @@ def get_hh_areas_data():
     del df_cities
 
 def get_vacancies_by_area(_mod: HHClient):
-    
+    DateTimeNow = dt.datetime.now().strftime(r"%Y-%m-%dT%H:%M:%S.00+03:00")
+    DateTimeLines = [
+        {
+            'date_from':    f'2025-01-01T00:00:00.00+03:00',
+            'date_to':      f'2025-01-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-01-15T00:00:00.00+03:00',
+            'date_to':      f'2025-02-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-02-15T00:00:00.00+03:00',
+            'date_to':      f'2025-03-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-03-15T00:00:00.00+03:00',
+            'date_to':      f'2025-04-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-04-15T00:00:00.00+03:00',
+            'date_to':      f'2025-05-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-05-15T00:00:00.00+03:00',
+            'date_to':      f'2025-06-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-06-15T00:00:00.00+03:00',
+            'date_to':      f'2025-07-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-07-15T00:00:00.00+03:00',
+            'date_to':      f'2025-08-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-08-15T00:00:00.00+03:00',
+            'date_to':      f'2025-09-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-09-15T00:00:00.00+03:00',
+            'date_to':      f'2025-10-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-10-15T00:00:00.00+03:00',
+            'date_to':      f'2025-11-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-11-15T00:00:00.00+03:00',
+            'date_to':      f'2025-12-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2025-12-15T00:00:00.00+03:00',
+            'date_to':      f'2025-12-21T23:59:59.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-01T00:00:00.00+03:00',
+            'date_to':      f'2026-01-02T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-02T00:00:00.00+03:00',
+            'date_to':      f'2026-01-03T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-03T00:00:00.00+03:00',
+            'date_to':      f'2026-01-04T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-04T00:00:00.00+03:00',
+            'date_to':      f'2026-01-05T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-05T00:00:00.00+03:00',
+            'date_to':      f'2026-01-06T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-07T00:00:00.00+03:00',
+            'date_to':      f'2026-01-08T00:00:00.00+03:00',
+        },
+        {
+            'date_from':    f'2026-01-08T00:00:00.00+03:00',
+            'date_to':      f'2026-01-09T00:00:00.00+03:00',
+        },
+        {
+            'date_from':    f'2026-01-09T00:00:00.00+03:00',
+            'date_to':      f'2026-01-10T00:00:00.00+03:00',
+        },
+        {
+            'date_from':    f'2026-01-10T00:00:00.00+03:00',
+            'date_to':      f'2026-01-11T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-11T00:00:00.00+03:00',
+            'date_to':      f'2026-01-12T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-12T00:00:00.00+03:00',
+            'date_to':      f'2026-01-13T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-14T00:00:00.00+03:00',
+            'date_to':      f'2026-01-15T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-15T00:00:00.00+03:00',
+            'date_to':      f'2026-01-16T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-16T00:00:00.00+03:00',
+            'date_to':      f'2026-01-17T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-17T00:00:00.00+03:00',
+            'date_to':      f'2026-01-18T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-18T00:00:00.00+03:00',
+            'date_to':      f'2026-01-19T00:00:00.00+03:00'
+        },
+        {
+            'date_from':    f'2026-01-19T00:00:00.00+03:00',
+            'date_to':      DateTimeNow
+        }
+    ]
+
     # Получаем дерево регионов
     regions = _mod.get_area()
 
@@ -83,46 +207,67 @@ def get_vacancies_by_area(_mod: HHClient):
         
         # Обрабатываем каждый ID региона
         for district in country["areas"]:
-            
-            # NOTE: для исключения возможности получить поврежденный файл,
-            #       мы будем сохранять вакансии частями. В данногм случае
-            #       сохранение будет по регионам
-
             # Список данных по вакансиям
             vacancies_data = []
-
-            # Счетчик страниц
-            _page_idx = 0
-
-            while True:
-
-                # Отображение информации региона, с которым работает скрипт
-                print(f"district_id: {district["id"]}\t\tpage: {_page_idx}")
-
-                try:
-                    # Попытка выполнения поиска вакансий по ID региона и странице
-                    items = _mod.serach(
-                        area=district["id"],
-                        page=_page_idx
-                    ).get("items", [])
-
-                    if len(items) == 0:
-                        break
-                    
-                    # Успешно полученные данные вносим в список
-                    vacancies_data.extend(items)
-
-                except Exception as e:
-                    print("ERROR: {e}")
-                    break
-
-                _page_idx += 1
-                break
+            print(f"{district['id']}: {district['name']}")
             
+
+            for time_period in DateTimeLines:
+                # print(f"{time_period['date_from'][:10]}\t{time_period['date_to'][:10]}")
+
+                # NOTE: для исключения возможности получить поврежденный файл,
+                #       мы будем сохранять вакансии частями. В данногм случае
+                #       сохранение будет по регионам
+
+                
+
+                # Счетчик страниц
+                _page_idx = 0
+                # print(f"district_id: {district["id"]}\tdistrict_id: {district["name"]}")
+            
+                while True:
+                    print(f"{district["id"]}.{_page_idx}\t{time_period['date_from'][:10]} {time_period['date_to'][:10]}")
+
+
+                    # Отображение информации региона, с которым работает скрипт
+                    # print(f"district_id: {district["id"]}\t\tpage: {_page_idx}")
+
+                    try:
+                        # Попытка выполнения поиска вакансий по ID региона и странице
+                        # Разобъем запросы по временным рамкам
+
+                        
+                        # print(f"{district["id"]}.{_page_idx}")
+                        items = _mod.serach(
+                            area=district["id"],
+                            page=_page_idx,
+                            per_page=100,
+                            date_from=time_period['date_from'],
+                            date_to=time_period['date_to']
+                        ).get("items", [])
+
+                        if len(items) == 0:
+                            break
+                        
+                        # Успешно полученные данные вносим в список
+                        vacancies_data.extend(items)
+
+                    except Exception as e:
+                        print(f"ERROR: {e}")
+                        with open('regions.log', 'a+', encoding='utf-8') as logfile:
+                            logfile.write(f"ERROR: {district['id']}; period: [{time_period['date_from']} {time_period['date_to']}]")
+                        break
+
+                    _page_idx += 1
+                    # break
+                
             # Если данные по региону были получены, то {...}
             if len(vacancies_data) > 0:
                 print(
                     f"saving data with vacancies of district {district["id"]} ({district["name"]})"
+                )
+                print(
+                    f"Saved {len(vacancies_data)} elements"
                 )
                 
                 # Определяем переменную для списка примененных признаков
@@ -141,22 +286,22 @@ def get_vacancies_by_area(_mod: HHClient):
                 df = pd.DataFrame(data=output_data)
                 
 
-                df.to_csv(f"./data/raw/HH/vacancies/{district["id"]}.csv", index=True)
-                print(df)
+                df.to_csv(f"./data/raw/HH/vacancies/{str(district["id"])}.csv", index=True)
+                # print(df)
 
-                print(df.shape)
+                # print(df.shape)
                 # TODO: очистка дубликатов
-                df.drop_duplicates()
-                print(df.shape)
+                # df.drop_duplicates(ignore_index=True, inplace=True)
+                # print(df.shape)
 
                 del df
                 
 
             # ОСТАНОВКА ЦИКЛА
-            break
+            # break
 
         # ОСТАНОВКА ЦИКЛА
-        break
+        # break
 
 def main():
     hh = HHClient()
