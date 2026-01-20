@@ -75,15 +75,18 @@ def get_hh_areas_data():
     del df_regions
     del df_cities
 
-def recurs_request(_mod: HHClient, params: dict, date_from, date_to, period_lvl: int = 1):
+def recurs_request(_mod: HHClient, district, date_from, date_to, period_lvl: int = 1):
     output  = []
-    
+    print(setLevelDate(period_lvl))
+    if not setLevelDate(period_lvl):
+        return []
     for timePeriod in GetDateTimeIntervales(date_from, date_to, setLevelDate(period_lvl)):
+        _output = []
         print("check: {} with LVL_{} [{} {}]".format(
-            params['district_id'],
+            district,
             period_lvl,
-            date_from,
-            date_to
+            timePeriod['date_from'],
+            timePeriod['date_to']
         ))
         page_id = 0
         periosIsSuccess = False
@@ -91,35 +94,55 @@ def recurs_request(_mod: HHClient, params: dict, date_from, date_to, period_lvl:
             print('PAGE: {}'.format(page_id))
             try:
                 item = _mod.serach(
-                    area=params['district_id'],
+                    area=district,
                     page=page_id,
                     per_page=100,
                     date_from=timePeriod['date_from'],
                     date_to=timePeriod['date_to']
                 ).get("items", [])
 
+                periosIsSuccess = True
+                if len(item) == 0:
+                    break
+
+                print('FOUND (in district {}) elements {}'.format(
+                    district,
+                    len(item)
+                ))
+
+                _output.extend(item)
+                periosIsSuccess = True
+
             except Exception as e:
                 print(f"ERROR: {e}")
                 print('[with page: {}]'.format(page_id))
+                periosIsSuccess = False
                 with open('regions.log', 'a+', encoding='utf-8') as logfile:
-                    logfile.write(f"ERROR: {params['district_id']}; period: {timePeriod['date_from']} {timePeriod['date_to']} with LVL {period_lvl}\n")
+                    logfile.write(f"ERROR: {district}; period: {timePeriod['date_from']} {timePeriod['date_to']} with LVL {period_lvl}\n")
                 break
 
-            if len(item) == 0:
-                break
-
-            output.extend(item)
-            periosIsSuccess = True
+            
             page_id += 1
         if not periosIsSuccess:
-            item = recurs_request(
+            print("DROWN with seding: {} {} {} {}".format(
+                district,
+                timePeriod.get('date_from'),
+                timePeriod.get('date_to'),
+                (period_lvl+1)
+            ))
+            _output = recurs_request(
                 _mod,
-                params=params,
+                district,
                 date_from=timePeriod.get('date_from'),
-                date_to=timePeriod.get('date_from'),
+                date_to=timePeriod.get('date_to'),
                 period_lvl=(period_lvl+1)
             )
-            if len(item) != 0: output.extend(item)
+            print('FOUND (in district {}) elements {}'.format(
+                district,
+                len(item)
+            ))
+            if len(item) > 0:
+                output.extend(item)
     return output
 
 
@@ -153,52 +176,59 @@ def get_vacancies_by_area(_mod: HHClient):
             # Список данных по вакансиям
             vacancies_data = []
             print(f"{district['id']}: {district['name']}")
+            vacancies_data = recurs_request(
+                _mod,
+                district['id'],
+                '2025-01-01T00:00:00.00+03:00',
+                DateTimeNow,
+                1
+            )
             # continue
-            IS_SUCCESS = False
-            search_lvl = 1
-            while not IS_SUCCESS:
-                temp_vacancies = []
-                for time_period in DateTimeLines:
+            # IS_SUCCESS = False
+            # search_lvl = 1
+            # while not IS_SUCCESS:
+            #     temp_vacancies = []
+            #     for time_period in DateTimeLines:
 
-                    # Счетчик страниц
-                    _page_idx = 0
-                    # print(f"district_id: {district["id"]}\tdistrict_id: {district["name"]}")
+            #         # Счетчик страниц
+            #         _page_idx = 0
+            #         # print(f"district_id: {district["id"]}\tdistrict_id: {district["name"]}")
                 
-                    while True:
-                        print(f"{district["id"]}.{_page_idx}\t{time_period['date_from'][:10]} {time_period['date_to'][:10]}")
+            #         while True:
+            #             print(f"{district["id"]}.{_page_idx}\t{time_period['date_from'][:10]} {time_period['date_to'][:10]}")
 
-                        items = []
+            #             items = []
 
-                        try:
-                            # Попытка выполнения поиска вакансий по ID региона и странице
-                            # Разобъем запросы по временным рамкам
+            #             try:
+            #                 # Попытка выполнения поиска вакансий по ID региона и странице
+            #                 # Разобъем запросы по временным рамкам
 
-                            items = _mod.serach(
-                                area=district["id"],
-                                page=_page_idx,
-                                per_page=100,
-                                date_from=time_period['date_from'],
-                                date_to=time_period['date_to']
-                            ).get("items", [])
+            #                 items = _mod.serach(
+            #                     area=district["id"],
+            #                     page=_page_idx,
+            #                     per_page=100,
+            #                     date_from=time_period['date_from'],
+            #                     date_to=time_period['date_to']
+            #                 ).get("items", [])
 
-                        except Exception as e:
-                            IS_SUCCESS = False
-                            print(f"ERROR: {e}")
-                            with open('regions.log', 'a+', encoding='utf-8') as logfile:
-                                logfile.write(f"ERROR: {district['id']}; period: [{time_period['date_from']} {time_period['date_to']}]\n")
-                            break
+            #             except Exception as e:
+            #                 IS_SUCCESS = False
+            #                 print(f"ERROR: {e}")
+            #                 with open('regions.log', 'a+', encoding='utf-8') as logfile:
+            #                     logfile.write(f"ERROR: {district['id']}; period: [{time_period['date_from']} {time_period['date_to']}]\n")
+            #                 break
                         
                         
-                        if len(items) == 0:
-                                break
+            #             if len(items) == 0:
+            #                     break
                             
-                        # Успешно полученные данные вносим в список
-                        temp_vacancies.extend(items)
-                        IS_SUCCESS = True
+            #             # Успешно полученные данные вносим в список
+            #             temp_vacancies.extend(items)
+            #             IS_SUCCESS = True
 
-                        _page_idx += 1
-                        # break
-                    vacancies_data.extend(temp_vacancies)
+            #             _page_idx += 1
+            #             # break
+            #         vacancies_data.extend(temp_vacancies)
                 
             # Если данные по региону были получены, то {...}
             if len(vacancies_data) > 0:
