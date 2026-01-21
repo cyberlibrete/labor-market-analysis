@@ -75,90 +75,110 @@ def get_hh_areas_data():
     del df_regions
     del df_cities
 
-def recurs_request(_mod: HHClient, district, date_from, date_to, period_lvl: int = 1):
+def saving_data_to_file(_country: dict, _district: dict, _timePriod: dict, data: list, path: str):
+    if len(data) > 0:
+        print("[v] SAVING {} elements of district {} ({}) by priod [{} {}]".format(
+            len(data),
+            _district['id'],
+            _district['name'],
+            _timePriod['date_from'],
+            _timePriod['date_to']
+        ))
+        
+        # Определяем переменную для списка примененных признаков
+        fieldnames = list()
+
+        for it in data:
+            fieldnames += it.keys()
+        fieldnames = list(set(fieldnames))
+        output_data = {f"{key}": [] for key in fieldnames}
+        
+        for line in data:
+            for _key in fieldnames:
+                output_data[f"{_key}"].append(line.get(f"{_key}", ""))
+        
+        # Создаем датафрейм (таблицу вакансий в регионе)
+        df = pd.DataFrame(data=output_data)
+
+        __timepriod = f"{_timePriod['date_from']}_{_timePriod['date_to']}".replace('+03:00', '').replace(':', '-')
+
+        df.to_csv(f"{path}{_country['id']}_{_district['id']}_{__timepriod}.csv", index=False)
+        del df
+
+def recurs_request(_mod: HHClient, country, district, date_from, date_to, period_lvl: int = 1):
     output  = []
     print(setLevelDate(period_lvl))
-    if not setLevelDate(period_lvl):
-        return []
+
+    if not setLevelDate(period_lvl): return []
+    
     for timePeriod in GetDateTimeIntervales(date_from, date_to, setLevelDate(period_lvl)):
         _output = []
         
-        page_id = 0
-        periosIsSuccess = False
-        while True:
-            # print('PAGE: {}'.format(page_id))
-            try:
+
+        try:
+            _temp_output    = []
+            page_id         = 0
+            # periodIsSuccess = False
+
+            while True:
+        
                 item = _mod.serach(
-                    area=district,
+                    area=district['id'],
                     page=page_id,
                     per_page=100,
                     date_from=timePeriod['date_from'],
                     date_to=timePeriod['date_to']
                 ).get("items", [])
 
-                print("check: {}({}) with LVL_{} [{} {}] elements: {}".format(
-                    district,
+                print(" {} check: {}({}) period: [{} {}] elements: {} +{}".format(
+                    f"{'-'*(period_lvl - 1)}{period_lvl}{'-'*(8 - period_lvl)}",
+                    district['id'],
                     page_id,
-                    period_lvl,
                     timePeriod['date_from'],
                     timePeriod['date_to'],
+                    len(_temp_output),
                     len(item)
                 ))
-                print("item {}; _output {}; output {}".format(
-                    len(item),
-                    len(_output),
-                    len(output)
-                ))
 
-                periosIsSuccess = True
+                # periodIsSuccess = True
                 if len(item) == 0:
                     break
 
-                # print('FOUND (in district {}) elements {}'.format(
-                #     district,
-                #     len(item)
-                # ))
+                _temp_output.extend(item)
+                page_id += 1
 
-                _output.extend(item)
+            if len(_temp_output) > 0:
+                print("LOADED: {} +{}".format(
+                    len(_output),
+                    len(_temp_output)
+                ))
+                _output.extend(_temp_output)
 
-            except Exception as e:
-                print(f"ERROR: {e}")
-                print('[with page: {}]'.format(page_id))
-                periosIsSuccess = False
-                with open('regions.log', 'a+', encoding='utf-8') as logfile:
-                    logfile.write(f"ERROR: {district}; period: {timePeriod['date_from']} {timePeriod['date_to']} with LVL {period_lvl}\n")
-                break
-
-            
-            page_id += 1
-        if not periosIsSuccess:
+            saving_data_to_file(country, district, timePeriod, _output, './data/raw/HH/vacancies/')
+        except Exception as e:
+            print(f"ERROR: {e}")
+            print('[with page: {}]'.format(page_id))
+            # periodIsSuccess = False
             print("DROWN with sending: {} [{} {}] {}".format(
-                district,
+                district['id'],
                 timePeriod.get('date_from'),
                 timePeriod.get('date_to'),
                 (period_lvl+1)
             ))
-            item = recurs_request(
+            _output = recurs_request(
                 _mod,
+                country,
                 district,
                 date_from=timePeriod.get('date_from'),
                 date_to=timePeriod.get('date_to'),
                 period_lvl=(period_lvl+1)
             )
-            print("\t\t<FROM RECURCIVE FUNCTION WAS TAKEN {} ELEMENTS".format(
-                len(item)
-            ))
-
-            if len(item) > 0:
-                _output.extend(item)
+            # if len(_temp_output) > 0:
+            #     _output.extend(_temp_output)
         output.extend(_output)
-        print('<WITH PERIOD [{} {}] {} $.{}'.format(
-            timePeriod.get('date_from'),
-            timePeriod.get('date_to'),
-            len(output),
-            len(_output)
-        ))
+
     return output
+
 
 
 def get_vacancies_by_area(_mod: HHClient):
@@ -172,6 +192,8 @@ def get_vacancies_by_area(_mod: HHClient):
         DateTimeNow,
         {'minutes': 10})
     
+    PATH = './data/raw/HH/vacancies/'
+    
 
     # Получаем дерево регионов
     regions = _mod.get_area()
@@ -181,11 +203,11 @@ def get_vacancies_by_area(_mod: HHClient):
         if (country['id'] not in ['113', '16']):
             continue
 
-        check_reg, _ = GetRegionsWithError()
+        # check_reg, _ = GetRegionsWithError()
         # Обрабатываем каждый ID региона
         for district in country["areas"]:
             
-            if district['id'] not in check_reg:
+            if district['id'] != '1':
                 continue
 
             # Список данных по вакансиям
@@ -193,46 +215,58 @@ def get_vacancies_by_area(_mod: HHClient):
             print(f"{district['id']}: {district['name']}")
             vacancies_data = recurs_request(
                 _mod,
-                district['id'],
+                country,
+                district,
                 '2025-01-01T00:00:00.00+03:00',
                 DateTimeNow,
                 1
             )
+
+            saving_data_to_file(
+                country,
+                district,
+                {
+                    'date_from': '2025-01-01T00:00:00.00+03:00',
+                    'date_to': DateTimeNow
+                },
+                vacancies_data,
+                './data/'
+            )
             
                 
             # Если данные по региону были получены, то {...}
-            if len(vacancies_data) > 0:
-                print("[v] SAVING {} elements of district {} ({})".format(
-                    len(vacancies_data),
-                    district["id"],
-                    district["name"]
-                ))
+            # if len(vacancies_data) > 0:
+            #     print("[v] SAVING {} elements of district {} ({})".format(
+            #         len(vacancies_data),
+            #         district["id"],
+            #         district["name"]
+            #     ))
                 
-                # Определяем переменную для списка примененных признаков
-                fieldnames = list()
+            #     # Определяем переменную для списка примененных признаков
+            #     fieldnames = list()
 
-                for it in vacancies_data:
-                    fieldnames += it.keys()
-                fieldnames = list(set(fieldnames))
-                output_data = {f"{key}": [] for key in fieldnames}
+            #     for it in vacancies_data:
+            #         fieldnames += it.keys()
+            #     fieldnames = list(set(fieldnames))
+            #     output_data = {f"{key}": [] for key in fieldnames}
                 
-                for line in vacancies_data:
-                    for _key in fieldnames:
-                        output_data[f"{_key}"].append(line.get(f"{_key}", ""))
+            #     for line in vacancies_data:
+            #         for _key in fieldnames:
+            #             output_data[f"{_key}"].append(line.get(f"{_key}", ""))
                 
-                # Создаем датафрейм (таблицу вакансий в регионе)
-                df = pd.DataFrame(data=output_data)
+            #     # Создаем датафрейм (таблицу вакансий в регионе)
+            #     df = pd.DataFrame(data=output_data)
                 
 
-                df.to_csv(f"./data/raw/HH/vacancies/{str(district["id"])}.csv", index=True)
-                # print(df)
+            #     df.to_csv(f"./data/raw/HH/vacancies/{'0' * (5 - len(district['id']))}{str(district["id"])}.csv", index=True)
+            #     # print(df)
 
-                # print(df.shape)
-                # TODO: очистка дубликатов
-                # df.drop_duplicates(ignore_index=True, inplace=True)
-                # print(df.shape)
+            #     # print(df.shape)
+            #     # TODO: очистка дубликатов
+            #     # df.drop_duplicates(ignore_index=True, inplace=True)
+            #     # print(df.shape)
 
-                del df
+            #     del df
                 
 
             # ОСТАНОВКА ЦИКЛА
