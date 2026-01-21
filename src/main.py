@@ -3,6 +3,7 @@ from collectors.superjob_api import SuperJobAPI
 from readerlogs import *
 import pandas as pd
 import datetime as dt
+import os
 
 def get_json_from_object(value):
     ...
@@ -75,14 +76,14 @@ def get_hh_areas_data():
     del df_regions
     del df_cities
 
-def saving_data_to_file(_country: dict, _district: dict, _timePriod: dict, data: list, path: str):
+def saving_data_to_file(_country: dict, _district: dict, _timePeriod: dict, data: list, path: str):
     if len(data) > 0:
         print("[v] SAVING {} elements of district {} ({}) by priod [{} {}]".format(
             len(data),
             _district['id'],
             _district['name'],
-            _timePriod['date_from'],
-            _timePriod['date_to']
+            _timePeriod['date_from'],
+            _timePeriod['date_to']
         ))
         
         # Определяем переменную для списка примененных признаков
@@ -100,21 +101,24 @@ def saving_data_to_file(_country: dict, _district: dict, _timePriod: dict, data:
         # Создаем датафрейм (таблицу вакансий в регионе)
         df = pd.DataFrame(data=output_data)
 
-        __timepriod = f"{_timePriod['date_from']}_{_timePriod['date_to']}".replace('+03:00', '').replace(':', '-')
+        __timePeriod = f"{_timePeriod['date_from']}_{_timePeriod['date_to']}".replace('+03:00', '').replace(':', '-')
 
-        df.to_csv(f"{path}{_country['id']}_{_district['id']}_{__timepriod}.csv", index=False)
+        df.to_csv(f"{path}{_country['id']}_{_district['id']}_{__timePeriod}.csv", index=False)
         del df
 
-def recurs_request(_mod: HHClient, country, district, date_from, date_to, period_lvl: int = 1):
-    output  = []
-    print(setLevelDate(period_lvl))
+def recurs_request(_mod: HHClient, country, district, date_from, date_to, period_lvl: int = 1, inChunks = True):
+    output = []
 
     if not setLevelDate(period_lvl): return []
     
     for timePeriod in GetDateTimeIntervales(date_from, date_to, setLevelDate(period_lvl)):
         _output = []
-        
+        __timeperiod = f"{timePeriod['date_from']}_{timePeriod['date_to']}".replace('+03:00', '').replace(':', '-')
+        check_path = f"./data/raw/HH/vacancies/{country['id']}_{district['id']}_{__timeperiod}.csv"
+        print(check_path)
 
+        if os.path.exists(check_path):
+            continue
         try:
             _temp_output    = []
             page_id         = 0
@@ -153,13 +157,13 @@ def recurs_request(_mod: HHClient, country, district, date_from, date_to, period
                     len(_temp_output)
                 ))
                 _output.extend(_temp_output)
-
-            saving_data_to_file(country, district, timePeriod, _output, './data/raw/HH/vacancies/')
+            if inChunks:
+                saving_data_to_file(country, district, timePeriod, _output, './data/raw/HH/vacancies/')
         except Exception as e:
             print(f"ERROR: {e}")
             print('[with page: {}]'.format(page_id))
             # periodIsSuccess = False
-            print("DROWN with sending: {} [{} {}] {}".format(
+            print("SPLIT: {} [{} {}] {}".format(
                 district['id'],
                 timePeriod.get('date_from'),
                 timePeriod.get('date_to'),
@@ -175,9 +179,13 @@ def recurs_request(_mod: HHClient, country, district, date_from, date_to, period
             )
             # if len(_temp_output) > 0:
             #     _output.extend(_temp_output)
-        output.extend(_output)
+        if not inChunks:
+            output.extend(_output)
 
-    return output
+    if not inChunks:
+        return output
+    else:
+        return True
 
 
 
@@ -200,15 +208,12 @@ def get_vacancies_by_area(_mod: HHClient):
 
     # Обрабатываем каждый ID страны
     for country in regions:
-        if (country['id'] not in ['113', '16']):
-            continue
+        # if (country['id'] not in ['113', '16']):
+        #     continue
 
         # check_reg, _ = GetRegionsWithError()
         # Обрабатываем каждый ID региона
         for district in country["areas"]:
-            
-            if district['id'] != '1':
-                continue
 
             # Список данных по вакансиям
             vacancies_data = []
@@ -222,58 +227,6 @@ def get_vacancies_by_area(_mod: HHClient):
                 1
             )
 
-            saving_data_to_file(
-                country,
-                district,
-                {
-                    'date_from': '2025-01-01T00:00:00.00+03:00',
-                    'date_to': DateTimeNow
-                },
-                vacancies_data,
-                './data/'
-            )
-            
-                
-            # Если данные по региону были получены, то {...}
-            # if len(vacancies_data) > 0:
-            #     print("[v] SAVING {} elements of district {} ({})".format(
-            #         len(vacancies_data),
-            #         district["id"],
-            #         district["name"]
-            #     ))
-                
-            #     # Определяем переменную для списка примененных признаков
-            #     fieldnames = list()
-
-            #     for it in vacancies_data:
-            #         fieldnames += it.keys()
-            #     fieldnames = list(set(fieldnames))
-            #     output_data = {f"{key}": [] for key in fieldnames}
-                
-            #     for line in vacancies_data:
-            #         for _key in fieldnames:
-            #             output_data[f"{_key}"].append(line.get(f"{_key}", ""))
-                
-            #     # Создаем датафрейм (таблицу вакансий в регионе)
-            #     df = pd.DataFrame(data=output_data)
-                
-
-            #     df.to_csv(f"./data/raw/HH/vacancies/{'0' * (5 - len(district['id']))}{str(district["id"])}.csv", index=True)
-            #     # print(df)
-
-            #     # print(df.shape)
-            #     # TODO: очистка дубликатов
-            #     # df.drop_duplicates(ignore_index=True, inplace=True)
-            #     # print(df.shape)
-
-            #     del df
-                
-
-            # ОСТАНОВКА ЦИКЛА
-            # break
-
-        # ОСТАНОВКА ЦИКЛА
-        # break
 
 def main():
     hh = HHClient()
