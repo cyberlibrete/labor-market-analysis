@@ -8,7 +8,7 @@ import json
 
 def ProgressBar(value, min=0, max=100, SIZE=100):
     # SIZE = 100
-    box = '▬'
+    box = '■'
     space = ' '
     boards = r'[]'
     _progress = value / (max - min)
