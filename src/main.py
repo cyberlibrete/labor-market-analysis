@@ -1,18 +1,19 @@
-from collectors.collector import *
-
+from Libs.collectors.collector import ParserHeadHunter
 import datetime as dt
 
 
 
-def get_json_from_object(value):
-    ...
-
-
-
 def main():
-    hh = HHClient()
+    DateTimeNow = dt.datetime.now().strftime(r"%Y-%m-%dT%H:%M:%S.00+03:00")
+    OBJECT: ParserHeadHunter = ParserHeadHunter(
+        date_interval_from='2025-01-01T00:00:00.00+03:00',
+        date_interval_to=DateTimeNow,
+        saving_file=True
+    )
 
-    get_vacancies_by_area(hh)
+    OBJECT.switchVerbouse(True)
+    OBJECT.switchCleaningData(True)
+    OBJECT.getVacancies()
 
     
 
@@ -20,3 +21,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
