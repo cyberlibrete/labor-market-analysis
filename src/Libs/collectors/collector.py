@@ -110,7 +110,7 @@ class ParserHeadHunter:
 
         if not setLevelDate(period_lvl): return []
 
-        DATELINE_LIST = GetDateTimeIntervales(date_from, date_to)
+        DATELINE_LIST = GetDateTimeIntervales(date_from, date_to, period_lvl)
 
         for timePeriod in DATELINE_LIST:
             _output = []
