@@ -126,7 +126,6 @@ class ParserHeadHunter:
             __timePeriod = f"{_timePeriod['date_from']}_{_timePeriod['date_to']}".replace('+03:00', '').replace(':', '-')
             filename = "{}{}{}_{}_{}.csv".format(
                 save_to_path if (save_to_path != None) and (os.path.exists(save_to_path)) else self.__data_path,
-                save_to_path if (save_to_path != None) and (os.path.exists(save_to_path)) else self.__data_path,
                 'cl_' if self.__cleaning_data else '',
                 _country['id'],
                 _district['id'],
