@@ -96,7 +96,7 @@ def CleaningData(df: pd.DataFrame):
 
     _key_get_value = [
         'area', 'employment', 'employer', 'type', 'department', 'schedule',
-        'experience', 'employment_form'
+        'experience', 'employment_form', 'billing_type'
     ]
     key_get_value = list(set(_key_get_value) & set(df.keys()))
 
@@ -104,14 +104,7 @@ def CleaningData(df: pd.DataFrame):
     BAR.show()
     for _key in key_get_list:
         try:
-            df[f'{_key}_id'] = df[_key].apply(getList, by_key='id')
-            BAR.show(add=1)
-        except Exception as e:
-            SOUND.signal()
-            print(f"\n{e}\n")
-
-        try:
-            df[f'{_key}_name'] = df[_key].apply(getList, by_key='name')
+            df[_key] = df[_key].apply(getList, by_key='name')
             BAR.show(add=1)
         except Exception as e:
             SOUND.signal()
@@ -120,14 +113,7 @@ def CleaningData(df: pd.DataFrame):
     
     for _key in key_get_value:
         try:
-            df[f'{_key}_id'] = df[_key].apply(get_value, by_key='id')
-            BAR.show(add=1)
-        except Exception as e:
-            SOUND.signal()
-            print(f"\n{e}\n")
-
-        try:
-            df[f'{_key}_name'] = df[_key].apply(get_value, by_key='name')
+            df[_key] = df[_key].apply(get_value, by_key='name')
             BAR.show(add=1)
         except Exception as e:
             SOUND.signal()
@@ -163,7 +149,7 @@ def CleaningData(df: pd.DataFrame):
             SOUND.signal()
             print(f"\n{e}\n")
 
-    if 'snippet' in df.keus():
+    if 'snippet' in df.keys():
         try:
             df['snippet_requirement'] = df['snippet'].apply(get_value, by_key='requirement')
             BAR.show(add=1)
@@ -381,7 +367,7 @@ def CleaningData(df: pd.DataFrame):
             SOUND.signal()
             print(f"\n{e}\n")
     
-    
+
     if 'branding' in df.keys():
         try:
             df['branding_type'] = df['branding'].apply(get_value, by_key='type')
