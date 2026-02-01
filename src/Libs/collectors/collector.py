@@ -5,6 +5,7 @@ from ..algorithms.progress_bar import PrograsBar
 import requests
 import threading
 import pandas as pd
+import json
 import os
 
 from ..algorithms import GetDateTimeIntervales, setLevelDate, CleaningData
@@ -88,8 +89,33 @@ class ParserHeadHunter:
 
             df.to_csv(f"{self.__data_path}{_country['id']}_{_district['id']}_{__timePeriod}.csv", index=False)
             del df
-        
-    def SavingDataToCsv(self, _country: dict, _district: dict, _timePeriod: dict, data: list):
+
+
+    def SavingDataToJson(self, _country: dict, _district: dict, _timePeriod: dict, data: list, save_to_path=None):
+        if len(data) > 0:
+            # Создаем датафрейм (таблицу вакансий в регионе)
+            # df = pd.DataFrame(data)
+            # if self.__cleaning_data:
+            #     df = CleaningData(df)
+
+            __timePeriod = f"{_timePeriod['date_from']}_{_timePeriod['date_to']}".replace('+03:00', '').replace(':', '-')
+            filename = "{}{}{}_{}_{}.json".format(
+                save_to_path if (save_to_path != None) and (os.path.exit(save_to_path)) else self.__data_path,
+                'cl_' if self.__cleaning_data else '',
+                _country['id'],
+                _district['id'],
+                __timePeriod
+            )
+            with open(filename, 'w', encoding='utf-8') as jsonfile:
+                json.dump(data, jsonfile, ensure_ascii=False, indent=4)
+            
+            print(' ✓ | JSON file saved')
+
+            # df.to_csv(filename, index=False)
+            # del df
+
+
+    def SavingDataToCsv(self, _country: dict, _district: dict, _timePeriod: dict, data: list, save_to_path=None):
         if len(data) > 0:
             # Создаем датафрейм (таблицу вакансий в регионе)
             df = pd.DataFrame(data)
@@ -98,7 +124,7 @@ class ParserHeadHunter:
 
             __timePeriod = f"{_timePeriod['date_from']}_{_timePeriod['date_to']}".replace('+03:00', '').replace(':', '-')
             filename = "{}{}{}_{}_{}.csv".format(
-                self.__data_path,
+                save_to_path if (save_to_path != None) and (os.path.exists(save_to_path)) else self.__data_path,
                 'cl_' if self.__cleaning_data else '',
                 _country['id'],
                 _district['id'],
@@ -106,6 +132,7 @@ class ParserHeadHunter:
             )
 
             df.to_csv(filename, index=False)
+            print(' ✓ | CSV file saved')
             del df
 
         
@@ -198,7 +225,8 @@ class ParserHeadHunter:
                             process.start()
                         for process in process_list:
                             process.join()
-                    
+
+                    self.SavingDataToJson(country, district, timePeriod, _output, save_to_path="D:/hh_data_json/")
                     self.SavingDataToCsv(country, district, timePeriod, _output)
             except Exception as e:
                 if self.__verb:
