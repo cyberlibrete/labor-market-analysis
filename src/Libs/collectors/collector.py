@@ -1,6 +1,9 @@
 from .hh_api import HHClient
+from ..algorithms.progress_bar import PrograsBar
 # from collectors.superjob_api import SuperJobAPI
 
+import requests
+import threading
 import pandas as pd
 import os
 
@@ -27,6 +30,7 @@ class ParserHeadHunter:
         self.__verb                 = False
         self.__dir_exists           = self.__creat_dir()
         self.__cleaning_data        = False
+        self.__CHUNK_SIZE           = 10
 
     def __check_dir(self):
         return os.path.exists(self.__data_path)
@@ -155,6 +159,46 @@ class ParserHeadHunter:
                         ))
                     _output.extend(_temp_output)
                 if self.__saving_by_chunks:
+                    _BAR: PrograsBar = PrograsBar(set_value=0, box='•', max=len(_output), SIZE=50)
+
+                    def __deep_loading(raw):
+                        try:
+                            _temp_url = raw.get('url')
+                            _temp_data = requests.request(method='GET', url=_temp_url).json()
+                            all_keys = list(set(list(raw.keys()) + list(_temp_data.keys())))
+                            
+
+                            for _key in all_keys:
+                                key_a = _key in raw.keys()
+                                key_b = _key in _temp_data.keys()
+                                equal_data = raw.get(_key, None) == _temp_data.get(_key, None)
+                                
+                                if (not key_a) and (key_b):
+                                    raw[_key] = _temp_data.get(_key)
+
+                                elif (key_a) and (key_b) and (equal_data):
+                                    raw[f"adv__{_key}"] = _temp_data.get(_key)
+
+                                else:
+                                    continue
+                            _BAR.show(add=1)
+                        except Exception as e:
+                            print(f'\n--> ERROR {e}')
+
+                    # self.__CHUNK_SIZE = 5
+                    check_line = [x for x in range(0, len(_output), self.__CHUNK_SIZE)]
+
+                    for chunk in check_line:
+                        a = chunk
+                        b = (chunk + self.__CHUNK_SIZE) if (chunk + self.__CHUNK_SIZE) <= len(_output) else len(_output)
+                        # current_loading = _output[a:b]
+                        process_list = [threading.Thread(target=__deep_loading, args=(row,)) for row in _output[a:b]]
+
+                        for process in process_list:
+                            process.start()
+                        for process in process_list:
+                            process.join()
+                    
                     self.SavingDataToCsv(country, district, timePeriod, _output)
             except Exception as e:
                 if self.__verb:
