@@ -9,7 +9,7 @@ import json
 import json
 import os
 
-from ..algorithms import GetDateTimeIntervales, setLevelDate, CleaningData
+from ..algorithms import GetDateTimeIntervales, setLevelDate, CleaningData, OpenRawDictData
 # from ..algorithms.timeline import *
 
 class ParserHeadHunter:
@@ -19,10 +19,14 @@ class ParserHeadHunter:
             date_interval_from: str,
             date_interval_to: str,
             saving_postgresql = None,
-            saving_file = None
+            saving_file = None,
+            countries = None,
+            districts = None,
         ):
 
         self.active_object          = HHClient()
+        self.countries              = countries
+        self.districts              = districts
         self.date_interval_from     = date_interval_from
         self.date_interval_to       = date_interval_to
         self.saving_postgresql      = saving_postgresql
@@ -118,10 +122,18 @@ class ParserHeadHunter:
 
     def SavingDataToCsv(self, _country: dict, _district: dict, _timePeriod: dict, data: list, save_to_path=None):
         if len(data) > 0:
+            # print(data[0].keys())
+            output = OpenRawDictData(data)
+            # exit()
             # Создаем датафрейм (таблицу вакансий в регионе)
-            df = pd.DataFrame(data)
-            if self.__cleaning_data:
-                df = CleaningData(df)
+            df = pd.DataFrame(output)
+            # df = pd.DataFrame(data)
+            # if self.__cleaning_data:
+            #     try:
+            #         df = CleaningData(df)
+            #     except Exception as e:
+            #         print(f'CLEANING ERROR: {e}')
+            #         exit()
 
             __timePeriod = f"{_timePeriod['date_from']}_{_timePeriod['date_to']}".replace('+03:00', '').replace(':', '-')
             filename = "{}{}{}_{}_{}.csv".format(
@@ -204,7 +216,7 @@ class ParserHeadHunter:
                                 if (not key_a) and (key_b):
                                     raw[_key] = _temp_data.get(_key)
 
-                                elif (key_a) and (key_b) and (equal_data):
+                                elif (key_a) and (key_b) and (not equal_data):
                                     raw[f"adv__{_key}"] = _temp_data.get(_key)
 
                                 else:
@@ -212,6 +224,7 @@ class ParserHeadHunter:
                             _BAR.show(add=1)
                         except Exception as e:
                             print(f'\n--> ERROR {e}')
+                            exit()
 
                     # self.__CHUNK_SIZE = 5
                     check_line = [x for x in range(0, len(_output), self.__CHUNK_SIZE)]
@@ -226,8 +239,6 @@ class ParserHeadHunter:
                             process.start()
                         for process in process_list:
                             process.join()
-
-                    self.SavingDataToJson(country, district, timePeriod, _output, save_to_path="D:/hh_data_json/")
 
                     self.SavingDataToJson(country, district, timePeriod, _output, save_to_path="D:/hh_data_json/")
                     self.SavingDataToCsv(country, district, timePeriod, _output)
@@ -259,29 +270,25 @@ class ParserHeadHunter:
             return True
 
 
-    def getVacancies(
-            self,
-            countries: list = None,
-            districts: list = None
-        ):
+    def getVacancies(self):
         regions = self.active_object.get_area()
 
-        if countries:
+        if self.countries:
             regions = [
-                country
-                for country in regions
-                if country.get('id') in countries
+                _country
+                for _country in regions
+                if _country.get('id') in self.countries
             ]
 
         for country in regions:
             
             district_list = country["areas"]
 
-            if districts:
+            if self.districts:
                 district_list = [
                     distr
                     for distr in country["areas"]
-                    if country["areas"].get('id') in districts
+                    if distr.get('id') in self.districts
                 ]
 
             for district in district_list:
